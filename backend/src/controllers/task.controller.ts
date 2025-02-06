@@ -18,23 +18,36 @@ import {
     updateTaskService,
 } from "../services/task.service";
 import { HTTPSTATUS } from "../config/http.config";
+import TaskModel from "../models/task.model";
 
 export const createTaskController = asyncHandler(
     async (req: Request, res: Response) => {
         const userId = req.user?._id;
 
+        // Parse request data
         const body = createTaskSchema.parse(req.body);
         const projectId = projectIdSchema.parse(req.params.projectId);
         const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
 
+        // Check user permissions
         const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
         roleGuard(role, [Permissions.CREATE_TASK]);
 
+        // Find the highest position task in the same status column
+        const lastTask = await TaskModel.findOne({
+            status: body.status,
+            workspace: workspaceId
+        }).sort({ position: -1 });
+
+        // Assign new position
+        const newPosition = lastTask ? lastTask.position + 1000 : 1000;
+
+        // Create the task with the new position
         const { task } = await createTaskService(
             workspaceId,
             projectId,
             userId,
-            body
+            { ...body, position: newPosition } // Pass position to service
         );
 
         return res.status(HTTPSTATUS.OK).json({
@@ -43,6 +56,33 @@ export const createTaskController = asyncHandler(
         });
     }
 );
+
+
+
+// export const createTaskController = asyncHandler(
+//     async (req: Request, res: Response) => {
+//         const userId = req.user?._id;
+//
+//         const body = createTaskSchema.parse(req.body);
+//         const projectId = projectIdSchema.parse(req.params.projectId);
+//         const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
+//
+//         const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
+//         roleGuard(role, [Permissions.CREATE_TASK]);
+//
+//         const { task } = await createTaskService(
+//             workspaceId,
+//             projectId,
+//             userId,
+//             body
+//         );
+//
+//         return res.status(HTTPSTATUS.OK).json({
+//             message: "Task created successfully",
+//             task,
+//         });
+//     }
+// );
 
 export const updateTaskController = asyncHandler(
     async (req: Request, res: Response) => {
@@ -146,3 +186,30 @@ export const deleteTaskController = asyncHandler(
         });
     }
 );
+
+
+// export const updateTaskBulkController = asyncHandler(
+//     async (req: Request, res: Response) => {
+//         const userId = req.user?._id;
+//
+//         const body = updateTaskSchema.parse(req.body);
+//
+//         // const taskId = taskIdSchema.parse(req.params.id);
+//         const projectId = projectIdSchema.parse(req.params.projectId);
+//         const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
+//
+//         const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
+//         roleGuard(role, [Permissions.EDIT_TASK]);
+//
+//         const { updatedTasks } = await updateBulkTaskService(
+//             workspaceId,
+//             projectId,
+//             body
+//         );
+//
+//         return res.status(HTTPSTATUS.OK).json({
+//             message: "Tasks updated successfully",
+//             task: updatedTasks,
+//         });
+//     }
+// );

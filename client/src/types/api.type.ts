@@ -244,10 +244,17 @@ export type TaskType = {
   } | null;
   createdBy?: string;
   dueDate: string;
+  position: number;
   taskCode: string;
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type UpdateTaskType = {
+  _id: string;
+  status: TaskStatusEnumType;
+  position: number;
+}
 
 export type AllTaskPayloadType = {
   workspaceId: string;

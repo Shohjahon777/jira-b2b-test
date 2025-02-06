@@ -77,7 +77,7 @@ export const DataCalendar = ({ data }: DataCalendarProps) => {
             components={{
                 eventWrapper: ({ event }) => (
                     <EventCard
-                        id={event.id}
+                        // id={event.id}
                         title={event.title}
                         assignedTo={event.assignedTo}
                         status={event.status}

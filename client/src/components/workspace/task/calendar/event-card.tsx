@@ -5,7 +5,7 @@ import {TaskStatusEnum} from "@/constant";
 import {MemberAvatar} from "@/components/workspace/member/member-avatar.tsx";
 
 interface EventCardProps {
-    id: string;
+    // id: string;
     title: string;
     assignedTo: {
         _id: string;
@@ -23,7 +23,7 @@ const statusColorMap: Record<keyof typeof TaskStatusEnum, string> = {
     [TaskStatusEnum.DONE]: "border-l-emerald-500",
 };
 export const EventCard = ({
-                                id,
+                                // id,
                               title,
                               assignedTo,
                               status,

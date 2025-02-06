@@ -88,7 +88,7 @@ export const getProjectAnalyticsService = async (
     const currentDate = new Date()
 
 //     using mongoose aggregate
-    const totalAnalytic = await ProjectModel.aggregate([
+    const totalAnalytic = await TaskModel.aggregate([
         {
             $match: {
                 project: new mongoose.Types.ObjectId(projectId),

@@ -15,6 +15,7 @@ export const createTaskService = async (
         status: string;
         assignedTo?: string | null;
         dueDate?: string;
+        position: number;
     }
 ) => {
     const { title, description, priority, status, assignedTo, dueDate } = body;
@@ -22,10 +23,9 @@ export const createTaskService = async (
     const project = await ProjectModel.findById(projectId);
 
     if (!project || project.workspace.toString() !== workspaceId.toString()) {
-        throw new NotFoundException(
-            "Project not found or does not belong to this workspace"
-        );
+        throw new NotFoundException("Project not found or does not belong to this workspace");
     }
+
     if (assignedTo) {
         const isAssignedUserMember = await MemberModel.exists({
             userId: assignedTo,
@@ -36,6 +36,14 @@ export const createTaskService = async (
             throw new Error("Assigned user is not a member of this workspace.");
         }
     }
+
+    // Find the highest position in the same status column
+    const lastTask = await TaskModel.findOne({ status, workspace: workspaceId })
+        .sort({ position: -1 })
+        .select("position");
+
+    const newPosition = lastTask ? lastTask.position + 1000 : 1000;
+
     const task = new TaskModel({
         title,
         description,
@@ -46,6 +54,7 @@ export const createTaskService = async (
         workspace: workspaceId,
         project: projectId,
         dueDate,
+        position: newPosition,
     });
 
     await task.save();
@@ -53,14 +62,15 @@ export const createTaskService = async (
     return { task };
 };
 
+
 export const updateTaskService = async (
     workspaceId: string,
     projectId: string,
     taskId: string,
     body: {
-        title: string;
+        title?: string;
         description?: string;
-        priority: string;
+        priority?: string;
         status: string;
         assignedTo?: string | null;
         dueDate?: string;
@@ -213,3 +223,47 @@ export const deleteTaskService = async (
 
     return;
 };
+
+//
+// export const updateBulkTaskService = async (
+//     workspaceId: string,
+//     projectId: string,
+//     body: {
+//         title?: string;
+//         description?: string;
+//         priority?: string;
+//         status?: string;
+//         assignedTo?: string | null;
+//         dueDate?: string;
+//     }
+// ) => {
+//     const project = await ProjectModel.findById(projectId);
+//
+//     if (!project || project.workspace.toString() !== workspaceId.toString()) {
+//         throw new NotFoundException(
+//             "Project not found or does not belong to this workspace"
+//         );
+//     }
+//
+//     // Find all tasks that belong to this project
+//     const tasks = await TaskModel.find({ project: projectId });
+//
+//     if (!tasks.length) {
+//         throw new NotFoundException("No tasks found for this project");
+//     }
+//
+//     // Bulk update all tasks in the project
+//     const updateResult = await TaskModel.updateMany(
+//         { project: projectId }, // Filter: Only update tasks in this project
+//         { $set: body } // Update: Apply all fields dynamically
+//     );
+//
+//     if (updateResult.modifiedCount === 0) {
+//         throw new BadRequestException("No tasks were updated");
+//     }
+//
+//     // Fetch and return updated tasks
+//     const updatedTasks = await TaskModel.find({ project: projectId });
+//
+//     return { updatedTasks };
+// };

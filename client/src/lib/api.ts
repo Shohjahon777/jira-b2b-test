@@ -12,7 +12,7 @@ import {
   CreateWorkspaceResponseType,
   EditProjectPayloadType,
   ProjectByIdPayloadType,
-  ProjectResponseType, TaskByIdPayloadType, TaskResponseType, TaskType,
+  ProjectResponseType, TaskByIdPayloadType, TaskResponseType, TaskType, UpdateTaskType,
 } from "../types/api.type";
 import {
   AllWorkspaceResponseType,
@@ -172,7 +172,7 @@ export const getProjectAnalyticsQueryFn = async ({
   projectId,
 }: ProjectByIdPayloadType): Promise<AnalyticsResponseType> => {
   const response = await API.get(
-    `/workspace/${workspaceId}/project/${projectId}`
+    `/project/${projectId}/workspace/${workspaceId}/analytics`
   );
   return response.data;
 };
@@ -266,6 +266,28 @@ export const updateTaskMutationFn = async ({
     dueDate?: string;
   };
 }): Promise<{ message: string; task: TaskType }> => {
+  const response = await API.put(
+      `/task/${taskId}/project/${projectId}/workspace/${workspaceId}/update`,
+      data
+  );
+  return response.data;
+};
+
+
+export const updateBulkTaskMutationFn = async ({
+  workspaceId,
+  projectId,
+  taskId,
+  data,
+}: {
+  workspaceId: string;
+  projectId: string;
+  taskId: string;
+  data: {
+    status: string;
+    position: number;
+  };
+}): Promise<{ message: string; task: UpdateTaskType }> => {
   const response = await API.put(
       `/task/${taskId}/project/${projectId}/workspace/${workspaceId}/update`,
       data

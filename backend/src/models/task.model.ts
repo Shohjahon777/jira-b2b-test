@@ -18,6 +18,7 @@ export interface TaskDocument extends Document {
     assignedTo: mongoose.Types.ObjectId | null;
     createdBy: mongoose.Types.ObjectId;
     dueDate: Date | null;
+    position: number,
     createdAt: Date;
     updatedAt: Date;
 }
@@ -73,6 +74,10 @@ const taskSchema = new Schema<TaskDocument>(
             type: Date,
             default: null,
         },
+        position: {
+            type: Number,
+            default: 1000,
+        }
     },
     {
         timestamps: true,
