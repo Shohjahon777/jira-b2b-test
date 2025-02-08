@@ -6,10 +6,10 @@ import {
     CircleDotDashedIcon,
     CircleDotIcon,
     CircleIcon,
-    PlusIcon,
+    // PlusIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useCreateTaskModal } from "@/hooks/use-create-task-modal.ts";
+// import { Button } from "@/components/ui/button";
+// import useCreateTaskDialog from "@/hooks/use-create-task-dialog.ts";
 import { TaskStatusEnumType } from "@/constant";
 
 interface KanbanColumnHeaderProps {
@@ -26,11 +26,11 @@ const statusIconMap: Record<TaskStatusEnumType, React.ReactNode> = {
 };
 
 export const KanbanColumnHeader = ({ board, taskCount }: KanbanColumnHeaderProps) => {
-    const { open } = useCreateTaskModal();
+    // const { onOpen } = useCreateTaskDialog();
     const icon = statusIconMap[board];
 
     return (
-        <div className="px-2 py-1.5 flex items-center justify-between">
+        <div className="px-2 py-1.5 flex items-center justify-center">
             <div className="flex items-center gap-x-2">
                 {icon}
                 <h2 className="text-sm font-medium">{snakeCaseToTitleCase(board)}</h2>
@@ -38,9 +38,9 @@ export const KanbanColumnHeader = ({ board, taskCount }: KanbanColumnHeaderProps
                     {taskCount}
                 </div>
             </div>
-            <Button onClick={open} variant="ghost" size="icon" className="size-5">
-                <PlusIcon className="size-4 text-neutral-500" />
-            </Button>
+            {/*<Button onClick={onOpen} variant="ghost" size="icon" className="size-5">*/}
+            {/*    <PlusIcon className="size-4 text-neutral-500" />*/}
+            {/*</Button>*/}
         </div>
     );
 };
