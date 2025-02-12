@@ -90,35 +90,46 @@ export const getColumns = (projectId?: string): ColumnDef<TaskType>[] => {
             },
           },
         ]),
+
+
     {
       accessorKey: "assignedTo",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Assigned To" />
+          <DataTableColumnHeader column={column} title="Assigned To" />
       ),
       cell: ({ row }) => {
-        const assignee = row.original.assignedTo || null;
-        const name = assignee?.name || "";
+        const assignees = row.original.assignedTo || [];
 
-        const initials = getAvatarFallbackText(name);
-        const avatarColor = getAvatarColor(name);
+        if (!assignees.length) {
+          return <span className="text-gray-400">Unassigned</span>;
+        }
 
         return (
-          name && (
-            <div className="flex items-center gap-1">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={assignee?.profilePicture || ""} alt={name} />
-                <AvatarFallback className={avatarColor}>
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <span className="block text-ellipsis w-[100px] truncate">
-                {assignee?.name}
+            <div className="flex items-center gap-2 flex-wrap">
+              {assignees.map((assignee) => {
+                const name = assignee?.name || "";
+                const initials = getAvatarFallbackText(name);
+                const avatarColor = getAvatarColor(name);
+
+                return (
+                    <div key={assignee._id} className="flex items-center gap-1">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={assignee.profilePicture || ""} alt={name} />
+                        <AvatarFallback className={avatarColor}>{initials}</AvatarFallback>
+                      </Avatar>
+                      <span className="block text-ellipsis w-[100px] truncate">
+                {name}
               </span>
+                    </div>
+                );
+              })}
             </div>
-          )
         );
       },
     },
+
+
+
     {
       accessorKey: "dueDate",
       header: ({ column }) => (

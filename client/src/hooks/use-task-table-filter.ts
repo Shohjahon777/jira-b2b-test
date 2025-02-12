@@ -4,7 +4,12 @@ import {
   TaskStatusEnum,
   TaskStatusEnumType,
 } from "@/constant";
-import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
+import {
+  parseAsString,
+  parseAsStringEnum,
+  useQueryStates,
+  parseAsArrayOf
+} from "nuqs";
 
 const useTaskTableFilter = () => {
   return useQueryStates({
@@ -16,7 +21,7 @@ const useTaskTableFilter = () => {
     ),
     keyword: parseAsString,
     projectId: parseAsString,
-    assigneeId: parseAsString,
+    assigneeId: parseAsArrayOf(parseAsString),
   });
 };
 

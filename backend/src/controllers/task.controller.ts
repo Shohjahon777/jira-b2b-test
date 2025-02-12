@@ -19,6 +19,11 @@ import {
 } from "../services/task.service";
 import { HTTPSTATUS } from "../config/http.config";
 import TaskModel from "../models/task.model";
+// // import MemberModel from "../models/member.model";
+// import {BadRequestException} from "../utils/appError";
+// import UserModel from "../models/user.model";
+
+
 
 export const createTaskController = asyncHandler(
     async (req: Request, res: Response) => {
@@ -28,6 +33,13 @@ export const createTaskController = asyncHandler(
         const body = createTaskSchema.parse(req.body);
         const projectId = projectIdSchema.parse(req.params.projectId);
         const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
+
+        // Ensure assignedTo is always an array
+        const assignedTo = body.assignedTo
+            ? Array.isArray(body.assignedTo)
+                ? body.assignedTo
+                : [body.assignedTo]
+            : undefined;
 
         // Check user permissions
         const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
@@ -47,8 +59,13 @@ export const createTaskController = asyncHandler(
             workspaceId,
             projectId,
             userId,
-            { ...body, position: newPosition } // Pass position to service
+            {
+                ...body,
+                assignedTo: body.assignedTo ? (Array.isArray(body.assignedTo) ? body.assignedTo : [body.assignedTo]) : [],
+                position: newPosition
+            }
         );
+
 
         return res.status(HTTPSTATUS.OK).json({
             message: "Task created successfully",
@@ -56,6 +73,7 @@ export const createTaskController = asyncHandler(
         });
     }
 );
+
 
 
 

@@ -54,7 +54,7 @@ const TaskTable = () => {
         priority: filters.priority,
         status: filters.status,
         projectId: projectId || filters.projectId,
-        assignedTo: filters.assigneeId,
+        assignedTo: Array.isArray(filters.assigneeId) ? filters.assigneeId.join(",") : filters.assigneeId,
         pageNumber,
         pageSize,
       }),
@@ -129,27 +129,29 @@ const DataTableFilterToolbar: FC<DataTableFilterToolbarProps> = ({
     };
   });
 
-  // Workspace Memebers
-  const assigneesOptions = members?.map((member) => {
-    const name = member.userId?.name || "Unknown";
-    const initials = getAvatarFallbackText(name);
-    const avatarColor = getAvatarColor(name);
+  // Workspace Members
+    const assigneesOptions = members?.map((member) => {
+        const name = member.userId?.name || "Unknown";
+        const initials = getAvatarFallbackText(name);
+        const avatarColor = getAvatarColor(name);
 
-    return {
-      label: (
-        <div className="flex items-center space-x-2">
-          <Avatar className="h-7 w-7">
-            <AvatarImage src={member.userId?.profilePicture || ""} alt={name} />
-            <AvatarFallback className={avatarColor}>{initials}</AvatarFallback>
-          </Avatar>
-          <span>{name}</span>
-        </div>
-      ),
-      value: member.userId._id,
-    };
-  });
+        return {
+            rawLabel: name, // For filtering
+            label: (
+                <div className="flex items-center space-x-2">
+                    <Avatar className="h-7 w-7">
+                        <AvatarImage src={member.userId?.profilePicture || ""} alt={name} />
+                        <AvatarFallback className={avatarColor}>{initials}</AvatarFallback>
+                    </Avatar>
+                    <span>{name}</span>
+                </div>
+            ),
+            value: member.userId._id,
+        };
+    });
 
-  const handleFilterChange = (key: keyof Filters, values: string[]) => {
+
+    const handleFilterChange = (key: keyof Filters, values: string[]) => {
     setFilters({
       ...filters,
       [key]: values.length > 0 ? values.join(",") : null,
@@ -189,16 +191,23 @@ const DataTableFilterToolbar: FC<DataTableFilterToolbarProps> = ({
       />
 
       {/* Assigned To filter */}
-      <DataTableFacetedFilter
-        title="Assigned To"
-        multiSelect={true}
-        options={assigneesOptions}
-        disabled={isLoading}
-        selectedValues={filters.assigneeId?.split(",") || []}
-        onFilterChange={(values) => handleFilterChange("assigneeId", values)}
-      />
+        <DataTableFacetedFilter
+            title="Assigned To"
+            multiSelect={true}
+            options={assigneesOptions.map(({ rawLabel, label, value }) => ({
+                label: rawLabel,
+                render: label,
+                value,
+            }))}
+            disabled={isLoading}
+            selectedValues={filters.assigneeId ?? []} // Ensure it's always an array
+            onFilterChange={(values) => handleFilterChange("assigneeId", values)}
+        />
 
-      {!projectId && (
+        {/*TODO: Fix filter issues in assignee users*/}
+
+
+        {!projectId && (
         <DataTableFacetedFilter
           title="Projects"
           multiSelect={false}

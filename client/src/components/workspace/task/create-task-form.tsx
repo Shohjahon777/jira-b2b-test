@@ -2,7 +2,7 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { CalendarIcon, Loader } from "lucide-react";
+import {CalendarIcon, Loader} from "lucide-react";
 import {
   Form,
   FormControl,
@@ -41,6 +41,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createTaskMutationFn } from "@/lib/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { MultiSelectAssignees} from "@/components/workspace/task/multiple-choice-assignee.tsx";
+// import {Command, CommandGroup, CommandInput, CommandItem} from "@/components/ui/command.tsx";
+// import {Badge} from "@/components/ui/badge.tsx";
 
 export default function CreateTaskForm(props: {
   projectId?: string;
@@ -78,53 +81,42 @@ export default function CreateTaskForm(props: {
     };
   });
 
-  // Workspace Memebers
+  // Workspace Members
   const membersOptions = members?.map((member) => {
     const name = member.userId?.name || "Unknown";
     const initials = getAvatarFallbackText(name);
     const avatarColor = getAvatarColor(name);
 
     return {
-      label: (
-        <div className="flex items-center space-x-2">
+      label: name, // Keep the label as a plain string for better functionality
+      value: member.userId._id,
+      avatar: (
           <Avatar className="h-7 w-7">
             <AvatarImage src={member.userId?.profilePicture || ""} alt={name} />
             <AvatarFallback className={avatarColor}>{initials}</AvatarFallback>
           </Avatar>
-          <span>{name}</span>
-        </div>
       ),
-      value: member.userId._id,
     };
   });
 
+
   const formSchema = z.object({
-    title: z.string().trim().min(1, {
-      message: "Title is required",
-    }),
+    title: z.string().trim().min(1, { message: "Title is required" }),
     description: z.string().trim(),
-    projectId: z.string().trim().min(1, {
-      message: "Project is required",
+    projectId: z.string().trim().min(1, { message: "Project is required" }),
+    status: z.enum(Object.values(TaskStatusEnum) as [keyof typeof TaskStatusEnum], {
+      required_error: "Status is required",
     }),
-    status: z.enum(
-      Object.values(TaskStatusEnum) as [keyof typeof TaskStatusEnum],
-      {
-        required_error: "Status is required",
-      }
-    ),
-    priority: z.enum(
-      Object.values(TaskPriorityEnum) as [keyof typeof TaskPriorityEnum],
-      {
-        required_error: "Priority is required",
-      }
-    ),
-    assignedTo: z.string().trim().min(1, {
-      message: "AssignedTo is required",
+    priority: z.enum(Object.values(TaskPriorityEnum) as [keyof typeof TaskPriorityEnum], {
+      required_error: "Priority is required",
     }),
-    dueDate: z.date({
-      required_error: "A date of birth is required.",
-    }),
+    assignedTo: z.union([
+      z.string().trim().min(1),  // Single user
+      z.array(z.string().trim().min(1)).default([]) // Multiple users, default to empty array
+    ]),
+    dueDate: z.date({ required_error: "Due date is required." }),
   });
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -132,6 +124,7 @@ export default function CreateTaskForm(props: {
       title: "",
       description: "",
       projectId: projectId ? projectId : "",
+      assignedTo: []
     },
   });
 
@@ -151,6 +144,9 @@ export default function CreateTaskForm(props: {
         dueDate: values.dueDate.toISOString(),
       },
     };
+
+
+
 
     mutate(payload, {
       onSuccess: () => {
@@ -292,41 +288,43 @@ export default function CreateTaskForm(props: {
 
             <div>
               <FormField
-                control={form.control}
-                name="assignedTo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assigned To</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a assignee" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <div
-                          className="w-full max-h-[200px]
-                           overflow-y-auto scrollbar
-                          "
+                  control={form.control}
+                  name="assignedTo"
+                  render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Assigned To</FormLabel>
+                        <Select
+                            onValueChange={field.onChange}
+                            // defaultValue={field.value}
                         >
-                          {membersOptions?.map((option) => (
-                            <SelectItem
-                              className="cursor-pointer"
-                              key={option.value}
-                              value={option.value}
-                            >
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </div>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                          <FormControl>
+                            {/*<SelectTrigger>*/}
+                            {/*  <SelectValue placeholder="Select a assignee" />*/}
+                            {/*</SelectTrigger>*/}
+
+                            <MultiSelectAssignees
+                                options={membersOptions}
+                                selectedValues={field.value || []} // Ensure it handles an array
+                                onChange={field.onChange} // Update form state
+                            />
+                          </FormControl>
+                          {/*<SelectContent>*/}
+                          {/*  <div className="w-full max-h-[200px] overflow-y-auto scrollbar">*/}
+                          {/*    {membersOptions?.map((option) => (*/}
+                          {/*        <SelectItem*/}
+                          {/*            className="cursor-pointer"*/}
+                          {/*            key={option.value}*/}
+                          {/*            value={option.value}*/}
+                          {/*        >*/}
+                          {/*          {option.label}*/}
+                          {/*        </SelectItem>*/}
+                          {/*    ))}*/}
+                          {/*  </div>*/}
+                          {/*</SelectContent>*/}
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                  )}
               />
             </div>
 

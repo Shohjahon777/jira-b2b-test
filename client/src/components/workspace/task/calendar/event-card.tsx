@@ -11,7 +11,7 @@ interface EventCardProps {
         _id: string;
         name: string;
         profilePicture: string | null;
-    } | null;
+    }[];
     status: keyof typeof TaskStatusEnum;
 }
 
@@ -46,15 +46,16 @@ export const EventCard = ({
                 )}
             >
                 <p>{title}</p>
-                <div className="flex items-center gap-x-1">
-                    {assignedTo ? (
-                        <>
-                            <MemberAvatar name={assignedTo.name} />
-                        </>
+                <div className="flex items-center gap-x-1 flex-wrap">
+                    {assignedTo.length > 0 ? (
+                        assignedTo.map((user) => (
+                            <MemberAvatar key={user._id} name={user.name} />
+                        ))
                     ) : (
-                        <p className="text-gray-400">Unassigned</p> // Show placeholder
+                        <p className="text-gray-400">Unassigned</p>
                     )}
                 </div>
+
 
             </div>
         </div>

@@ -3,6 +3,17 @@ import MemberModel from "../models/member.model";
 import ProjectModel from "../models/project.model";
 import TaskModel from "../models/task.model";
 import { BadRequestException, NotFoundException } from "../utils/appError";
+import {
+	objectOutputType,
+	Writeable,
+	ZodArray,
+	ZodEffects,
+	ZodEnum,
+	ZodNullable,
+	ZodOptional,
+	ZodString, ZodType,
+	ZodUnion
+} from "zod";
 
 export const createTaskService = async (
     workspaceId: string,
@@ -13,27 +24,28 @@ export const createTaskService = async (
         description?: string;
         priority: string;
         status: string;
-        assignedTo?: string | null;
+        assignedTo?: string | string[];  // Change from string | null to string[]
         dueDate?: string;
         position: number;
     }
 ) => {
-    const { title, description, priority, status, assignedTo, dueDate } = body;
+    const { title, description, priority, status, assignedTo = [], dueDate } = body;
 
+    // Check if project exists and belongs to the workspace
     const project = await ProjectModel.findById(projectId);
-
     if (!project || project.workspace.toString() !== workspaceId.toString()) {
         throw new NotFoundException("Project not found or does not belong to this workspace");
     }
 
-    if (assignedTo) {
-        const isAssignedUserMember = await MemberModel.exists({
-            userId: assignedTo,
+    // Validate assigned users (check if they are members of the workspace)
+    if (assignedTo.length > 0) {
+        const assignedUsersCount = await MemberModel.countDocuments({
+            userId: { $in: assignedTo },
             workspaceId,
         });
 
-        if (!isAssignedUserMember) {
-            throw new Error("Assigned user is not a member of this workspace.");
+        if (assignedUsersCount !== assignedTo.length) {
+            throw new BadRequestException("One or more assigned users are not members of this workspace.");
         }
     }
 
@@ -44,12 +56,13 @@ export const createTaskService = async (
 
     const newPosition = lastTask ? lastTask.position + 1000 : 1000;
 
+    // Create and save the task
     const task = new TaskModel({
         title,
         description,
         priority: priority || TaskPriorityEnum.MEDIUM,
         status: status || TaskStatusEnum.TODO,
-        assignedTo,
+        assignedTo,  // Store multiple assigned users
         createdBy: userId,
         workspace: workspaceId,
         project: projectId,
@@ -64,17 +77,17 @@ export const createTaskService = async (
 
 
 export const updateTaskService = async (
-    workspaceId: string,
-    projectId: string,
-    taskId: string,
-    body: {
-        title?: string;
-        description?: string;
-        priority?: string;
-        status: string;
-        assignedTo?: string | null;
-        dueDate?: string;
-    }
+	workspaceId: string,
+	projectId: string,
+	taskId: string,
+	body: objectOutputType<{
+		title: ZodOptional<ZodString>;
+		description: ZodOptional<ZodString>;
+		priority: ZodOptional<ZodEnum<Writeable<[string, ...string[]]>>>;
+		status: ZodEnum<Writeable<[string, ...string[]]>>;
+		assignedTo: ZodOptional<ZodNullable<ZodEffects<ZodUnion<[ZodString, ZodArray<ZodString>]>, ZodString["_output"][]>>>;
+		dueDate: ZodEffects<ZodOptional<ZodString>, ZodString["_output"] | undefined, ZodString["_input"] | undefined>
+	}, ZodType<any, any, any>, "strip">
 ) => {
     const project = await ProjectModel.findById(projectId);
 
@@ -142,7 +155,7 @@ export const getAllTasksService = async (
         query.assignedTo = { $in: filters.assignedTo };
     }
 
-    if (filters.keyword && filters.keyword !== undefined) {
+    if (filters.keyword) {
         query.title = { $regex: filters.keyword, $options: "i" };
     }
 

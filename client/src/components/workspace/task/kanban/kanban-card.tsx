@@ -19,7 +19,8 @@ export const KanbanCard = ({ task }: KanbanCardProps) => {
             </div>
             <DottedSeparator />
             <div className="flex items-center gap-x-1.5">
-                {task.assignedTo?.name && (<MemberAvatar name={task.assignedTo?.name} fallbackClassName="text-[10px]" />)}
+                {task.assignedTo.length > 0 &&
+                    task.assignedTo.map( (user) => (<MemberAvatar name={user.name} fallbackClassName="text-[10px]" />))}
                 <div className="size-1 rounded-full bg-neutral-300" />
                 <TaskDate value={task.dueDate} className="text-xs" />
             </div>
